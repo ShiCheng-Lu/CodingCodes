@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "tuple": "cpp",
+        "utility": "cpp",
+        "vector": "cpp",
+        "array": "cpp"
+    }
+}
