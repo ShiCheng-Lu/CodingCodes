@@ -56,7 +56,7 @@ void encode(uint8_t* data, size_t len, uint8_t t) {
     data[len + i] = 0;
   }
 
-  uint8_t* coef = malloc(len);
+  uint8_t* coef = (uint8_t*)malloc(len);
 
   for (uint8_t i = 0; i < len; ++i) {
     for (uint8_t x = 0; x < t; ++x) {
@@ -80,15 +80,25 @@ void encode(uint8_t* data, size_t len, uint8_t t) {
 
 void encode_BCH(uint8_t* data, size_t n, size_t k) {
   // construct g(x)
-  uint8_t* divisor = malloc(n - k + 1);
+  uint8_t* divisor = (uint8_t*)malloc(n - k + 1);
   uint8_t a = 11;  // primitive element of gf256
   uint8_t a_n = 1;
+  for (int i = 0; i < n - k + 1; ++i) {
+    divisor[i] = 0;
+    printf("%x ", divisor[i]);
+  }
   divisor[0] = 1;
+  printf("\n");
   for (uint8_t root_num = 1; root_num < n - k + 1; ++root_num) {
     for (uint8_t i = root_num; i > 0; --i) {
       divisor[i] = gf256_add(gf256_mul(divisor[i - 1], a_n), divisor[i]);
     }
     a_n = gf256_mul(a_n, a);
+
+    for (int i = 0; i < n - k + 1; ++i) {
+      printf("%x ", divisor[i]);
+    }
+    printf("\n");
   }
 
   // s(x) = q(x)g(x) + r(x)
@@ -143,7 +153,7 @@ void init_gf256() {
   }
 }
 
-void main(void) {
+int main(void) {
   init_gf256();
 
   uint8_t data[11] = {1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 1};

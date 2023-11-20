@@ -4,23 +4,21 @@
 template <typename T>
 class A {
  public:
-  virtual void f(T a) = 0;
+  virtual void f(T a) {}
 };
 
-template <typename T>
-class B : public A<T> {
+class B : public A<uint8_t> {
  public:
   B() {}
-  void f(T a) { printf("%d\n", a); }
+  void f(uint8_t a) { printf("%d\n", a); }
 };
 
-template <typename T>
-void f(A<T> a) {
+void f(A<uint8_t>& a) {
   a.f(6);
 }
 
 int main(void) {
-  B<uint8_t> b;
+  B b;
 
   f(b);
 }

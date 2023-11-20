@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <iostream>
 #include <vector>
 
 using namespace std;
@@ -6,10 +7,10 @@ using namespace std;
 template <typename T>
 class Field {
  public:
-  virtual T add(T a, T b) = 0;
-  virtual T sub(T a, T b) = 0;
-  virtual T mul(T a, T b) = 0;
-  virtual T div(T a, T b) = 0;
+  virtual T add(T a, T b) { return a + b; }
+  virtual T sub(T a, T b) { return a - b; }
+  virtual T mul(T a, T b) { return a * b; }
+  virtual T div(T a, T b) { return a / b; }
 };
 
 class GF256 : public Field<uint8_t> {
@@ -51,7 +52,10 @@ class GF256 : public Field<uint8_t> {
 
 template <typename T>
 class ReedSolomon {
-  Field<T> f;
+  //  protected:
+  Field<T>& f;
+  size_t n;
+  size_t k;
   vector<T> divisor;
 
  public:
@@ -62,7 +66,8 @@ class ReedSolomon {
    * n : code word length
    * k : message length
    */
-  ReedSolomon(Field<T> f, T prim, T root, size_t n, size_t k) {
+  ReedSolomon(Field<T>& f, T prim, T root, size_t n, size_t k)
+      : f{f}, n{n}, k{k} {
     divisor.resize(n - k + 1);
     divisor[0] = 1;
     for (uint8_t root_num = 1; root_num < n - k + 1; ++root_num) {
@@ -70,6 +75,10 @@ class ReedSolomon {
         divisor[i] = f.add(f.mul(divisor[i - 1], root), divisor[i]);
       }
       root = f.mul(root, prim);
+      for (auto i : divisor) {
+        printf("%x ", i);
+      }
+      cout << endl;
     }
   }
 
@@ -85,7 +94,7 @@ class ReedSolomon {
       }
       remainder[n - k - 1] = f.sub(0, f.mul(divisor[n - k], mul));
     }
-    for (size_t x = 0; x < n - k) {
+    for (size_t x = 0; x < n - k; ++x) {
       remainder[x] = f.sub(0, remainder[x]);
     }
   }
@@ -94,6 +103,13 @@ class ReedSolomon {
 #include <stdio.h>
 int main(void) {
   auto gf256 = GF256();
+  auto field = Field<int>();
 
   auto rs = ReedSolomon<uint8_t>(gf256, 11, 1, 10, 6);
+
+  uint8_t data[12] = {1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 1};
+  rs.encode(data);
+  for (int i = 0; i < 10; ++i) {
+    printf("%x ", data[i]);
+  }
 }
