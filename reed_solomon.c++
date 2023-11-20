@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 
+#include "code.h"
+
 using namespace std;
 
 template <typename T>
@@ -51,12 +53,13 @@ class GF256 : public Field<uint8_t> {
 };
 
 template <typename T>
-class ReedSolomon {
+class ReedSolomon : public Code<T> {
   //  protected:
   Field<T>& f;
   size_t n;
   size_t k;
   vector<T> divisor;
+  vector<vector<T>> verifier;
 
  public:
   /**
@@ -70,22 +73,28 @@ class ReedSolomon {
       : f{f}, n{n}, k{k} {
     divisor.resize(n - k + 1);
     divisor[0] = 1;
-    for (uint8_t root_num = 1; root_num < n - k + 1; ++root_num) {
-      for (uint8_t i = root_num; i > 0; --i) {
+    for (size_t root_num = 1; root_num < n - k + 1; ++root_num) {
+      for (size_t i = root_num; i > 0; --i) {
         divisor[i] = f.add(f.mul(divisor[i - 1], root), divisor[i]);
       }
-      root = f.mul(root, prim);
-      for (auto i : divisor) {
-        printf("%x ", i);
+
+      // for decoding
+      vector<T> poly(n);
+      poly[0] = 1;
+      for (size_t i = 1; i < n; ++i) {
+        poly[i] = f.mul(poly[i - 1], root);
       }
-      cout << endl;
+      verifier.push_back(poly);
+
+      // next root
+      root = f.mul(root, prim);
     }
   }
 
-  void encode(T* data) {
+  vector<T> encode(vector<T>& data) {
     // s(x) = q(x)g(x) + r(x)
     // polynomial long division to find the remainder
-    T* remainder = data + k;  // use end of data as the remainder buffer
+    vector<T> remainder(n - k);
     for (size_t i = 0; i < k; ++i) {
       T mul = f.add(data[i], remainder[0]);
 
@@ -97,19 +106,48 @@ class ReedSolomon {
     for (size_t x = 0; x < n - k; ++x) {
       remainder[x] = f.sub(0, remainder[x]);
     }
+
+    vector<T> output(data);
+    output.insert(output.end(), remainder.begin(), remainder.end());
+    return output;
+  }
+
+  vector<T> decode(vector<T>& data) {
+    // validate data
+    bool valid = true;
+    for (vector<T> poly : verifier) {
+      T value = 0;
+      for (size_t i = 0; i < n; ++i) {
+        value = f.add(value, f.mul(poly[i], data[data.size() - 1 - i]));
+      }
+      if (value != 0) {
+        printf("\nMSG INVALID %d %d\n", poly[0], value);
+        valid = false;
+        break;
+      }
+    }
+
+    if (valid) {
+      vector<T> output(data);
+      return output;
+    }
+
+    printf("MSG INVALID\n");
+    return vector<T>();
   }
 };
 
-#include <stdio.h>
 int main(void) {
   auto gf256 = GF256();
   auto field = Field<int>();
 
   auto rs = ReedSolomon<uint8_t>(gf256, 11, 1, 10, 6);
 
-  uint8_t data[12] = {1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 1};
-  rs.encode(data);
-  for (int i = 0; i < 10; ++i) {
-    printf("%x ", data[i]);
+  vector<uint8_t> data{1, 2, 3, 4, 5, 6};
+  vector<uint8_t> encoded = rs.encode(data);
+  for (uint8_t i : encoded) {
+    printf("%x ", i);
   }
+  printf("\n");
+  rs.decode(encoded);
 }

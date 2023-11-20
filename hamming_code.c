@@ -39,7 +39,7 @@ void encode_block(uint8_t* data, uint8_t* result, size_t size) {
 void encode();
 
 void decode_block(uint8_t *encoded, uint8_t *data, size_t len) {
-    size_t 
+    // size_t 
 }
 
 void compress(uint8_t* data, size_t len) {
