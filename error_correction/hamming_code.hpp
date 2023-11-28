@@ -4,34 +4,97 @@
 #include <stdint.h>
 #include "code.hpp"
 
-class HammingCode : public Code<uint8_t> {
- protected:
-  uint8_t block_size = 64;  //
+#include <iostream>
+
+class HammingCode : public Code {
+  // return bits needed to represent the value
+  int num_parity_bits(uint64_t value) {
+    int bits = 0;
+    for (int bit_test = 32; bit_test > 0; bit_test >>= 1) {
+      if (value >> bit_test != 0) {
+        bits += bit_test;
+        value >>= bit_test;
+      }
+    }
+    return bits + value;
+  }
+
  public:
-  /**
-   * @brief Construct a new Hamming Code encoder/decoder
-   *
-   */
-  HammingCode();
+  template <typename T>
+  T encode(T& data) {
+    uint64_t parity = 0;
+    uint64_t index = 3;  // starting index into the output
+    bool total_parity = false;
+    //
+    // create output, size is data size + # parity bits + 1 (total parity)
+    T output(data.size() + num_parity_bits(data.size()) + 1);
+    for (auto bit : data) {
+      if (bit) {
+        output[index] = true;
+        parity ^= index;
+        total_parity ^= 1;
+      }
 
-  /**
-   * @brief perform Reed-Solomon encoding on the data
-   *
-   * @param data input data
-   * @return vector<T> encoded data
-   */
-  std::vector<uint8_t> encode(std::vector<uint8_t>& data);
+      index++;
+      if ((index & (index - 1)) == 0) {  // is a power of 2, parity bit
+        index++;
+      }
+    }
+    // set parity bits
+    index = 1;
+    while (parity != 0) {
+      if (parity & 1) {
+        output[index] = true;
+        total_parity ^= 1;
+      }
+      parity >>= 1;  // shift right by 1
+      index *= 2;    // multiply by 2
+    }
+    // set overall parity bit (for 2 bit error detection)
+    output[0] = total_parity;
 
-  /**
-   * @brief perform Reed-Solomon decoding on the data
-   *
-   * @param data encoded input data
-   * @return vector<T> decoded data
-   */
-  std::vector<uint8_t> decode(std::vector<uint8_t>& data);
+    return output;
+  }
 
-  std::vector<uint8_t> from_string(std::string data);
-  std::string to_string(std::vector<uint8_t>& data);
+  template <typename T>
+  T decode(T& data) {
+    uint64_t parity = 0;
+    bool total_parity = false;
+
+    size_t index = 0;  // index of the output byte
+    // output size is data size - # parity bits - 1 (total parity)
+    T output(data.size() - num_parity_bits(data.size()) - 1);
+    // check parity
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (data[i]) {
+        parity ^= i;
+        total_parity ^= 1;
+      }
+
+      if ((i & (i - 1)) == 0) {
+        continue;  // power of 2, this is a parity bit
+      }
+      output[index] = data[i];
+      index++;
+    }
+
+    // correct errors
+    if (parity != 0) {
+      if (total_parity == 0) {
+        // detected 2 bit error
+        throw CodeError("Detected 2 bit error, unable to correct");
+      }
+      // 1 bit error, the error index is the parity value
+      // if the error index is a not parity bit, output need to be corrected
+      if ((parity & (parity - 1)) != 0) {
+        // error index is parity - # parity bits stuffed before the index
+        index = parity - num_parity_bits(parity) - 1;
+        std::cout << "correcting error at " << index << std::endl;
+        output[index] = ~output[index];
+      }
+    }
+    return output;
+  }
 };
 
 #endif  // HAMMING_CODE_HPP

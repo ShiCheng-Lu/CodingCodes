@@ -4,7 +4,7 @@
 #include "gf256.hpp"
 
 template <typename T>
-class ReedSolomon : public Code<T> {
+class ReedSolomon : public Code {
  protected:
   Field<T>& f;                           // field of operation
   size_t n;                              // code word length

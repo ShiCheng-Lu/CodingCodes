@@ -4,18 +4,24 @@
 #include <string>
 #include <vector>
 
-template <typename T>
-class Code {
- public:
-  virtual std::vector<T> encode(std::vector<T>& data) { return data; }
-  virtual std::vector<T> decode(std::vector<T>& data) { return data; }
-};
-
-class DecodeError {
+class CodeError {
  public:
   std::string message;
 
-  DecodeError(std::string message) : message{message} {}
+  CodeError(std::string message) : message{message} {}
+};
+
+class Code {
+ public:
+  template <typename T>
+  T encode(T& data) {
+    throw CodeError("encoding not implemented");
+  }
+
+  template <typename T>
+  T decode(T& data) {
+    throw CodeError("decoding not implemented");
+  }
 };
 
 #endif  // _CODE_H_
