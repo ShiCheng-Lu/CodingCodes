@@ -20,6 +20,14 @@ class HammingCode : public Code {
   }
 
  public:
+  /**
+   * @brief Perform Hamming code encoding.
+   *
+   * @tparam T  a container type, must implement .size(), initialization with
+   * size, and operator[] indexing
+   * @param data input data to be encoded.
+   * @return T encoded data stored in the same container type.
+   */
   template <typename T>
   T encode(T& data) {
     uint64_t parity = 0;
@@ -28,8 +36,8 @@ class HammingCode : public Code {
     //
     // create output, size is data size + # parity bits + 1 (total parity)
     T output(data.size() + num_parity_bits(data.size()) + 1);
-    for (auto bit : data) {
-      if (bit) {
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (data[i]) {
         output[index] = true;
         parity ^= index;
         total_parity ^= 1;
@@ -56,6 +64,14 @@ class HammingCode : public Code {
     return output;
   }
 
+  /**
+   * @brief Perform Hamming code decoding.
+   *
+   * @tparam T a container type, must implement .size(), initialization with
+   * size, and operator[] indexing
+   * @param data encoded data.
+   * @return T decoded data stored in the same container type.
+   */
   template <typename T>
   T decode(T& data) {
     uint64_t parity = 0;
@@ -74,7 +90,7 @@ class HammingCode : public Code {
       if ((i & (i - 1)) == 0) {
         continue;  // power of 2, this is a parity bit
       }
-      output[index] = data[i];
+      output[index] = (bool)data[i];
       index++;
     }
 
@@ -90,7 +106,7 @@ class HammingCode : public Code {
         // error index is parity - # parity bits stuffed before the index
         index = parity - num_parity_bits(parity) - 1;
         std::cout << "correcting error at " << index << std::endl;
-        output[index] = ~output[index];
+        output[index] = (output[index] ^ 1);
       }
     }
     return output;

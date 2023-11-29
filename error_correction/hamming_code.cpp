@@ -1,56 +1,31 @@
 #include "hamming_code.hpp"
 #include <stdint.h>
 #include <iostream>
+#include "bit_array.hpp"
+#include "bit_string.hpp"
 
-// std::vector<uint8_t> from_string(std::string data) {
-//   uint64_t index = 0;
-//   std::vector<uint8_t> output;
-//   for (char c : data) {
-//     if (index % 8 == 0) {  // a new byte for the output is needed
-//       output.push_back(0);
-//     }
-//     if (c == '1') {
-//       output[index / 8] |= 1 << (index % 8);
-//     }
-//     index += 1;
-//   }
-//   return output;
-// }
-
-// std::string to_string(std::vector<uint8_t>& data) {
-//   uint64_t index = 0;
-//   std::string output;
-//   for (uint8_t byte : data) {
-//     for (int8_t i = 0; i < 8; ++i) {
-//       if (byte & (1 << i)) {
-//         output += '1';
-//       } else {
-//         output += '0';
-//       }
-//     }
-//   }
-//   return output;
-// }
-
-std::vector<uint8_t> from_string(std::string data) {
-  std::vector<uint8_t> output(data.size());
+template <typename T>
+T from_string(std::string data) {
+  T output(data.size());
   for (int i = 0; i < data.size(); ++i) {
     output[i] = (data[i] == '1');
   }
   return output;
 }
 
-std::string to_string(std::vector<uint8_t>& data) {
+template <typename T>
+std::string to_string(T& data) {
   std::string output(data.size(), '0');
   for (int i = 0; i < data.size(); ++i) {
-    output[i] = (data[i] == 0) ? '0' : '1';
+    output[i] = data[i] ? '0' : '1';
   }
   return output;
 }
 
 int main(void) {
   HammingCode c;
-  auto message = from_string("00110001110000011001010");
+
+  auto message = BitString("00110001110000011001010");
   std::cout << to_string(message) << std::endl;
 
   auto encoded = c.encode(message);

@@ -2,6 +2,12 @@
 #include <iostream>
 #include <vector>
 
+/**
+ * @brief Bit array backed by a vector<uint8_t>
+ *
+ * implements indexing and iterator
+ *
+ */
 class BitArray {
   struct Reference {
     uint8_t* ptr;
@@ -9,8 +15,8 @@ class BitArray {
 
     Reference(uint8_t* ptr, uint8_t idx) : ptr{ptr}, idx{idx} {}
 
-    Reference& operator=(bool v) {
-      if (v) {
+    Reference& operator=(bool value) {
+      if (value) {
         *ptr |= (1 << idx);
       } else {
         *ptr &= ~(1 << idx);
@@ -18,9 +24,7 @@ class BitArray {
       return *this;
     }
 
-    bool operator^(bool v) {
-      return (bool)(*this) ^ v;
-    }
+    bool operator^(bool v) { return (bool)(*this) ^ v; }
 
     operator bool() { return (*ptr & (1 << idx)) != 0; }
 
@@ -85,22 +89,6 @@ class BitArray {
   size_t size() { return data_size; }
 
   Reference operator[](size_t idx) {
-    return Reference{&data[idx / 8], (uint8_t)idx % 8};
+    return Reference{&data[idx / 8], (uint8_t)(idx % 8)};
   }
 };
-
-#include <bitset>
-
-int main() {
-  std::vector<uint8_t> d = {0b100101};
-  BitArray a("0110011");
-
-  //   std::cout << b << std::endl;
-  //   std::cout << a.test() << std::endl;
-  a[3] = ~a[3];
-
-  std::cout << "array values" << std::endl;
-  for (auto i : a) {
-    std::cout << i << std::endl;
-  }
-}
