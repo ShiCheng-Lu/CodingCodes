@@ -19,9 +19,9 @@ class Field {
 };
 
 class GF256 : public Field<uint8_t> {
-  uint8_t inv[256];
-
  public:
+  uint8_t inv[256] = {0};
+  // uint8_t reducing_poly;
   GF256() {
     for (uint8_t a = 1; a > 0; a++) {
       if (inv[a] != 0) {
@@ -43,16 +43,11 @@ class GF256 : public Field<uint8_t> {
     for (uint8_t i = 0; i < 8; ++i) {
       p ^= a * (b & 1);
       b >>= 1;
-      a = (a << 1) ^ (0x1b * (a & 0x80) >> 7);
+      a = (a << 1) ^ (0x1b * ((a & 0x80) >> 7));
     }
     return p;
   }
-  uint8_t div(uint8_t a, uint8_t b) {
-    if (b != 0) {
-      return mul(a, inv[b]);
-    }
-    return 0;
-  }
+  uint8_t div(uint8_t a, uint8_t b) { return mul(a, inv[b]); }
 };
 
 #endif  // _GF256_H_
