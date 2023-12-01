@@ -1,7 +1,7 @@
 #ifndef HAMMING_CODE_HPP
 #define HAMMING_CODE_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include "code.hpp"
 
 #include <iostream>
@@ -12,7 +12,7 @@
  */
 class HammingCode : public Code {
   // return bits needed to represent the value
-  int num_parity_bits(uint64_t value) {
+  int num_parity_bits(std::uint64_t value) {
     int bits = 0;
     for (int bit_test = 32; bit_test > 0; bit_test >>= 1) {
       if (value >> bit_test != 0) {
@@ -34,13 +34,13 @@ class HammingCode : public Code {
    */
   template <typename T>
   T encode(T& data) {
-    uint64_t parity = 0;
-    uint64_t index = 3;  // starting index into the output
+    std::uint64_t parity = 0;
+    std::uint64_t index = 3;  // starting index into the output
     bool total_parity = false;
     //
     // create output, size is data size + # parity bits + 1 (total parity)
     T output(data.size() + num_parity_bits(data.size()) + 1);
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (std::size_t i = 0; i < data.size(); ++i) {
       if (data[i]) {
         output[index] = true;
         parity ^= index;
@@ -78,14 +78,14 @@ class HammingCode : public Code {
    */
   template <typename T>
   T decode(T& data) {
-    uint64_t parity = 0;
+    std::uint64_t parity = 0;
     bool total_parity = false;
 
-    size_t index = 0;  // index of the output byte
+    std::size_t index = 0;  // index of the output byte
     // output size is data size - # parity bits - 1 (total parity)
     T output(data.size() - num_parity_bits(data.size()) - 1);
     // check parity
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (std::size_t i = 0; i < data.size(); ++i) {
       if (data[i]) {
         parity ^= i;
         total_parity ^= 1;

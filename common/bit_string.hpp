@@ -20,12 +20,12 @@ class BitString {
   };
 
  public:
-  BitString(size_t len) : data(len, '0') {}
+  BitString(std::size_t len) : data(len, '0') {}
   BitString(std::string str) : data(str) {}
 
-  size_t size() { return data.size(); }
+  std::size_t size() { return data.size(); }
 
-  Reference operator[](size_t idx) { return Reference(data[idx]); }
+  Reference operator[](std::size_t idx) { return Reference(data[idx]); }
 };
 
 #endif  // BIT_STRING_H_

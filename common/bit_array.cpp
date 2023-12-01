@@ -1,17 +1,18 @@
-
-#include <bitset>
 #include "bit_array.hpp"
+#include <bitset>
+
+using namespace std;
 
 int main() {
-  std::vector<uint8_t> d = {0b100101};
+  vector<uint8_t> d = {0b100101};
   BitArray a("0110011");
 
   //   std::cout << b << std::endl;
   //   std::cout << a.test() << std::endl;
   a[3] = ~a[3];
 
-  std::cout << "array values" << std::endl;
+  cout << "array values" << endl;
   for (auto i : a) {
-    std::cout << i << std::endl;
+    cout << i << endl;
   }
 }

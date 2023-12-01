@@ -1,19 +1,19 @@
-
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
 /**
- * @brief Bit array backed by a vector<uint8_t>
+ * @brief Bit array backed by a vector<std::uint8_t>
  *
  * implements indexing and iterator
  *
  */
 class BitArray {
   struct Reference {
-    uint8_t* ptr;
-    uint8_t idx;
+    std::uint8_t* ptr;
+    std::uint8_t idx;
 
-    Reference(uint8_t* ptr, uint8_t idx) : ptr{ptr}, idx{idx} {}
+    Reference(std::uint8_t* ptr, std::uint8_t idx) : ptr{ptr}, idx{idx} {}
 
     Reference& operator=(bool value) {
       if (value) {
@@ -40,7 +40,7 @@ class BitArray {
 
     Reference value;
 
-    Iterator(uint8_t* ptr, uint8_t idx) : value{ptr, idx} {}
+    Iterator(std::uint8_t* ptr, std::uint8_t idx) : value{ptr, idx} {}
 
     Reference& operator*() { return value; }
     Reference* operator->() { return &value; }
@@ -70,11 +70,11 @@ class BitArray {
     };
   };
 
-  std::vector<uint8_t> data;
+  std::vector<std::uint8_t> data;
   size_t data_size;
 
  public:
-  BitArray(std::vector<uint8_t> d) : data{d}, data_size{d.size() * 8} {}
+  BitArray(std::vector<std::uint8_t> d) : data{d}, data_size{d.size() * 8} {}
   BitArray(size_t data_size) : data(data_size / 8 + 1), data_size{data_size} {}
   BitArray(std::string d) : data(d.size() / 8 + 1), data_size{d.size()} {
     for (size_t i = 0; i < data_size; ++i) {
@@ -89,6 +89,6 @@ class BitArray {
   size_t size() { return data_size; }
 
   Reference operator[](size_t idx) {
-    return Reference{&data[idx / 8], (uint8_t)(idx % 8)};
+    return Reference{&data[idx / 8], (std::uint8_t)(idx % 8)};
   }
 };

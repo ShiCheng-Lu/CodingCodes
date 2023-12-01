@@ -5,15 +5,15 @@
 
 /**
  * @brief https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction
- * 
+ *
  * @tparam T type of symbols
  */
 template <typename T>
 class ReedSolomon : public Code {
  protected:
   Field<T>& f;                           // field of operation
-  size_t n;                              // code word length
-  size_t k;                              // message length
+  std::size_t n;                         // code word length
+  std::size_t k;                         // message length
   std::vector<T> divisor;                // polynomial divisor
   std::vector<std::vector<T>> verifier;  // sequential polynomial roots
 
@@ -27,19 +27,19 @@ class ReedSolomon : public Code {
    * @param n code word length
    * @param k message length
    */
-  ReedSolomon(Field<T>& f, T prim, T root, size_t n, size_t k)
+  ReedSolomon(Field<T>& f, T prim, T root, std::size_t n, std::size_t k)
       : f{f}, n{n}, k{k} {
     divisor.resize(n - k + 1);
     divisor[0] = 1;
-    for (size_t root_num = 1; root_num < n - k + 1; ++root_num) {
-      for (size_t i = root_num; i > 0; --i) {
+    for (std::size_t root_num = 1; root_num < n - k + 1; ++root_num) {
+      for (std::size_t i = root_num; i > 0; --i) {
         divisor[i] = f.add(f.mul(divisor[i - 1], root), divisor[i]);
       }
 
       // for decoding
       std::vector<T> poly(n);
       poly[0] = 1;
-      for (size_t i = 1; i < n; ++i) {
+      for (std::size_t i = 1; i < n; ++i) {
         poly[i] = f.mul(poly[i - 1], root);
       }
       verifier.push_back(poly);
@@ -59,15 +59,15 @@ class ReedSolomon : public Code {
     // s(x) = q(x)g(x) + r(x)
     // polynomial long division to find the remainder
     std::vector<T> remainder(n - k);
-    for (size_t i = 0; i < k; ++i) {
+    for (std::size_t i = 0; i < k; ++i) {
       T mul = f.add(data[i], remainder[0]);
 
-      for (size_t x = 0; x < n - k - 1; ++x) {
+      for (std::size_t x = 0; x < n - k - 1; ++x) {
         remainder[x] = f.sub(remainder[x + 1], f.mul(divisor[x + 1], mul));
       }
       remainder[n - k - 1] = f.sub(0, f.mul(divisor[n - k], mul));
     }
-    for (size_t x = 0; x < n - k; ++x) {
+    for (std::size_t x = 0; x < n - k; ++x) {
       remainder[x] = f.sub(0, remainder[x]);
     }
 
@@ -85,9 +85,9 @@ class ReedSolomon : public Code {
   std::vector<T> decode(std::vector<T>& data) {
     // validate data
     bool valid = true;
-    for (vector<T> poly : verifier) {
+    for (std::vector<T> poly : verifier) {
       T value = 0;
-      for (size_t i = 0; i < n; ++i) {
+      for (std::size_t i = 0; i < n; ++i) {
         value = f.add(value, f.mul(poly[i], data[data.size() - 1 - i]));
       }
       if (value != 0) {
@@ -97,12 +97,12 @@ class ReedSolomon : public Code {
     }
 
     if (valid) {
-      vector<T> output(data);
+      std::vector<T> output(data);
       return output;
     }
 
     // input data invalid
-    return vector<T>();
+    return std::vector<T>();
   }
 };
 

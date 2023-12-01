@@ -2,12 +2,14 @@
 
 #include <iostream>
 
+using namespace std;
+
 int main() {
-    RSA rsa{61, 53, 17};
+  RSA rsa{61, 53, 17};
 
-    std::cout << rsa.public_key().first << ' ' << rsa.public_key().second << std::endl;
+  cout << rsa.public_key().first << ' ' << rsa.public_key().second << endl;
 
-    std::cout << rsa.encode(65) << std::endl;
+  cout << rsa.encode(65) << endl;
 
-    std::cout << rsa.decode(2790) << std::endl;
+  cout << rsa.decode(2790) << endl;
 }
