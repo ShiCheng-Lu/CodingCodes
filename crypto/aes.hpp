@@ -5,6 +5,10 @@
 #include "code.hpp"
 #include "gf256.hpp"
 
+/**
+ * @brief https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+ *
+ */
 class AES : public Code {
  public:
   Field<uint8_t>& f;
@@ -45,16 +49,22 @@ class AES : public Code {
   }
 
   void MixColumns(std::vector<uint8_t>& data) {
+    uint8_t mix_mat[4][4] = {
+        {2, 3, 1, 1},
+        {1, 2, 3, 1},
+        {1, 1, 2, 3},
+        {3, 1, 1, 2},
+    };
     std::vector<uint8_t> result(4);
 
     for (int column = 0; column < 4; ++column) {
       for (int x = 0; x < 4; ++x) {
         for (int y = 0; y < 4; ++y) {
-          result[x] += data[column * 4 + x] * mix_col_matrix[x][y];
+          uint8_t product = f.mul(data[column * 4 + x], mix_mat[x][y]);
+          result[x] = f.add(result[x], product);
         }
       }
     }
-    // for (int i = 0; i <)
   }
 
   void AddRoundKey(std::vector<uint8_t>& data, std::vector<uint8_t>& key) {

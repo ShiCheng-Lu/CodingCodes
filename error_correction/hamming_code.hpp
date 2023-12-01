@@ -6,6 +6,10 @@
 
 #include <iostream>
 
+/**
+ * @brief https://en.wikipedia.org/wiki/Hamming_code
+ * 
+ */
 class HammingCode : public Code {
   // return bits needed to represent the value
   int num_parity_bits(uint64_t value) {

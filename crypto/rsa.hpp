@@ -2,6 +2,10 @@
 
 #include "modulo.hpp"
 
+/**
+ * @brief https://en.wikipedia.org/wiki/RSA_(cryptosystem)
+ *
+ */
 class RSA : public Code {
   int n;  // modulus
   int e;  // public key

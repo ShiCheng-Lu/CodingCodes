@@ -3,6 +3,11 @@
 
 #include "gf256.hpp"
 
+/**
+ * @brief https://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction
+ * 
+ * @tparam T type of symbols
+ */
 template <typename T>
 class ReedSolomon : public Code {
  protected:

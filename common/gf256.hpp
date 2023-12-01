@@ -9,6 +9,15 @@
 
 using namespace std;
 
+/**
+ * @brief a set on which addition, subtraction, multiplication, and division are
+ * defined and behave as the corresponding operations on rational and real
+ * numbers do.
+ *
+ * https://en.wikipedia.org/wiki/Field_(mathematics)
+ *
+ * @tparam T the type for the numbers in the field
+ */
 template <typename T>
 class Field {
  public:
@@ -19,8 +28,9 @@ class Field {
 };
 
 class GF256 : public Field<uint8_t> {
- public:
   uint8_t inv[256] = {0};
+
+ public:
   // uint8_t reducing_poly;
   GF256() {
     for (uint8_t a = 1; a > 0; a++) {
@@ -47,7 +57,15 @@ class GF256 : public Field<uint8_t> {
     }
     return p;
   }
-  uint8_t div(uint8_t a, uint8_t b) { return mul(a, inv[b]); }
+  uint8_t div(uint8_t a, uint8_t b) {
+    if (a == 0 || b == 0) {
+      return 0;
+    } else if (a == 1) {
+      return inv[b];
+    } else {
+      return mul(a, inv[b]);
+    }
+  }
 };
 
 #endif  // _GF256_H_
