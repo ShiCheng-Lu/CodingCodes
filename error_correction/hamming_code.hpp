@@ -2,13 +2,14 @@
 #define HAMMING_CODE_HPP
 
 #include <cstdint>
-#include "code.hpp"
-
 #include <iostream>
+
+#include "bit_array.hpp"
+#include "code.hpp"
 
 /**
  * @brief https://en.wikipedia.org/wiki/Hamming_code
- * 
+ *
  */
 class HammingCode : public Code {
   // return bits needed to represent the value
@@ -67,6 +68,10 @@ class HammingCode : public Code {
 
     return output;
   }
+  std::vector<uint8_t> encode(std::vector<uint8_t>& data) {
+    BitArray bit_array(data);
+    return encode(bit_array).data;
+  }
 
   /**
    * @brief Perform Hamming code decoding.
@@ -114,6 +119,10 @@ class HammingCode : public Code {
       }
     }
     return output;
+  }
+  std::vector<uint8_t> decode(std::vector<uint8_t>& data) {
+    BitArray bit_array(data);
+    return decode(bit_array).data;
   }
 };
 

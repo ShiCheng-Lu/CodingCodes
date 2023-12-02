@@ -59,7 +59,7 @@ class ReedSolomon : public Code {
     // s(x) = q(x)g(x) + r(x)
     // polynomial long division to find the remainder
     std::vector<T> remainder(n - k);
-    for (std::size_t i = 0; i < k; ++i) {
+    for (std::size_t i = 0; i < std::min(k, data.size()); ++i) {
       T mul = f.add(data[i], remainder[0]);
 
       for (std::size_t x = 0; x < n - k - 1; ++x) {
@@ -87,7 +87,7 @@ class ReedSolomon : public Code {
     bool valid = true;
     for (std::vector<T> poly : verifier) {
       T value = 0;
-      for (std::size_t i = 0; i < n; ++i) {
+      for (std::size_t i = 0; i < data.size(); ++i) {
         value = f.add(value, f.mul(poly[i], data[data.size() - 1 - i]));
       }
       if (value != 0) {
@@ -97,12 +97,13 @@ class ReedSolomon : public Code {
     }
 
     if (valid) {
-      std::vector<T> output(data);
+      std::vector<T> output(data.begin(), data.begin() + k);
       return output;
     }
 
     // input data invalid
-    return std::vector<T>();
+    throw CodeError("detected error, correction not implemented");
+    // return std::vector<T>();
   }
 };
 

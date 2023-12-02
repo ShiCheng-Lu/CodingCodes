@@ -12,7 +12,7 @@ int main(void) {
 
   auto rs = ReedSolomon<uint8_t>(gf256, 11, 1, 10, 6);
 
-  vector<uint8_t> data{1, 2, 3, 4, 5, 6};
+  vector<uint8_t> data{'h', 'e'};
   vector<uint8_t> encoded = rs.encode(data);
   for (uint8_t i : encoded) {
     printf("%x ", i);

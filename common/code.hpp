@@ -13,13 +13,10 @@ class CodeError {
 
 class Code {
  public:
-  template <typename T>
-  T encode(T& data) {
+  virtual std::vector<std::uint8_t> encode(std::vector<std::uint8_t>& data) {
     throw CodeError("encoding not implemented");
   }
-
-  template <typename T>
-  T decode(T& data) {
+  virtual std::vector<std::uint8_t> decode(std::vector<std::uint8_t>& data) {
     throw CodeError("decoding not implemented");
   }
 };
