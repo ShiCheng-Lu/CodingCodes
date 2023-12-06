@@ -1,3 +1,6 @@
+#ifndef BIG_INT_H_
+#define BIG_INT_H_
+
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -84,6 +87,27 @@ class BigInt {
       neg = true;
     }
   }
+  BigInt(const char* num_chars) {
+    std::string str_num(num_chars);
+    if (str_num[0] == '0' && str_num[1] == 'x') {
+      // string is a hex value
+      char str[3] = "00";
+      for (int i = str_num.size() - 2; i >= 1; i -= 2) {
+        str[0] = (i == 1) ? '0' : str_num[i];
+        str[1] = str_num[i + 1];
+        data.push_back(strtol(str, NULL, 16));
+      }
+      prune();
+      if (str_num[0] == '-') {
+        neg = true;
+      }
+    } else {
+      // decode as base 10
+      for (int i = 0; i < str_num.size(); ++i) {
+        *this = (*this * BigInt(10)) + BigInt(str_num[i] - '0');
+      }
+    }
+  }
   BigInt(int num) {
     if (num < 0) {
       neg = true;
@@ -93,6 +117,18 @@ class BigInt {
       data.push_back(num & 0xff);
       num >>= 8;
     }
+  }
+  BigInt(std::vector<std::uint8_t>& data) : data{data} {}
+
+  std::vector<std::uint8_t> vector() { return data; }
+
+  explicit operator bool() const {
+    for (auto v : data) {
+      if (v != 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   std::string to_hex_string() {
@@ -125,12 +161,12 @@ class BigInt {
   friend BigInt operator>>(const BigInt& num, unsigned int shift) {
     BigInt result;
 
-    std::uint8_t carry = 0;
     size_t start = shift / 8;
     shift = shift % 8;
-    for (std::size_t i = start; i < num.data.size(); ++i) {
-      result.data.push_back((num.data[i] << shift) + carry);
-      carry = num.data[i] >> (8 - shift);
+    std::uint8_t carry = num.get(start) >> shift;
+    for (std::size_t i = start + 1; i < num.data.size(); ++i) {
+      result.data.push_back((num.data[i] << (8 - shift)) + carry);
+      carry = num.data[i] >> shift;
     }
     if (carry) {
       result.data.push_back(carry);
@@ -163,6 +199,9 @@ class BigInt {
   }
 
   friend std::ostream& operator<<(std::ostream& out, const BigInt& num) {
+    if (num.data.size() == 0) {
+      return out << '0';
+    }
     out << std::hex;
     if (num.neg) {
       out << '-';
@@ -197,117 +236,16 @@ class BigInt {
   friend std::pair<BigInt, BigInt> divide(const BigInt& lhs, const BigInt& rhs);
   friend BigInt operator-(const BigInt& lhs, const BigInt& rhs);
   friend BigInt operator+(const BigInt& lhs, const BigInt& rhs);
+  friend BigInt operator*(const BigInt& lhs, const BigInt& rhs);
+  friend BigInt operator/(const BigInt& lhs, const BigInt& rhs);
+  friend BigInt operator%(const BigInt& lhs, const BigInt& rhs);
 };
 
-bool operator==(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) == 0;
-}
-bool operator!=(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) != 0;
-}
-bool operator<(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) < 0;
-}
-bool operator>(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) > 0;
-}
-bool operator<=(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) <= 0;
-}
-bool operator>=(const BigInt& lhs, const BigInt& rhs) {
-  return cmp(lhs, rhs) >= 0;
-}
+bool operator==(const BigInt& lhs, const BigInt& rhs);
+bool operator!=(const BigInt& lhs, const BigInt& rhs);
+bool operator<(const BigInt& lhs, const BigInt& rhs);
+bool operator>(const BigInt& lhs, const BigInt& rhs);
+bool operator<=(const BigInt& lhs, const BigInt& rhs);
+bool operator>=(const BigInt& lhs, const BigInt& rhs);
 
-BigInt operator+(const BigInt& lhs, const BigInt& rhs) {
-  if (lhs.neg == rhs.neg) {
-    BigInt result = add_value(lhs, rhs);
-    result.neg = lhs.neg;
-    return result;
-  }
-  if (cmp_abs(lhs, rhs) < 0) {
-    BigInt result = sub_value(rhs, lhs);
-    result.neg = rhs.neg;
-    return result;
-  } else {
-    BigInt result = sub_value(lhs, rhs);
-    result.neg = lhs.neg;
-    return result;
-  }
-}
-
-BigInt operator-(const BigInt& lhs, const BigInt& rhs) {
-  if (lhs.neg != rhs.neg) {
-    BigInt result = add_value(lhs, rhs);
-    result.neg = lhs.neg;
-    return result;
-  }
-  if (cmp_abs(lhs, rhs) < 0) {
-    BigInt result = sub_value(rhs, lhs);
-    result.neg = !rhs.neg;
-    return result;
-  } else {
-    BigInt result = sub_value(lhs, rhs);
-    result.neg = lhs.neg;
-    return result;
-  }
-}
-
-BigInt operator*(const BigInt& lhs, const BigInt& rhs) {
-  BigInt result;
-  result.data.resize(lhs.data.size() + rhs.data.size());
-
-  for (size_t n = 0; n < rhs.data.size(); ++n) {
-    std::uint8_t carry = 0;
-    for (size_t i = 0; i < lhs.data.size(); ++i) {
-      std::uint8_t product =
-          result.get(n + i) + lhs.get(i) * rhs.get(n) + carry;
-      carry = (result.get(n + i) + lhs.get(i) * rhs.get(n) + carry) >>
-              (sizeof(std::uint8_t) * 8);
-      result.data[n + i] = product;
-    }
-    if (carry) {
-      result.data[lhs.data.size() + n] = carry;
-    }
-  }
-  result.prune();
-  result.neg = lhs.neg != rhs.neg;
-  return result;
-}
-
-std::pair<BigInt, BigInt> divide(const BigInt& lhs, const BigInt& rhs) {
-  std::vector<BigInt> divisors;
-  BigInt remainder(lhs);
-  BigInt quotient;
-  std::size_t size_diff =
-      std::max(lhs.data.size(), rhs.data.size()) - rhs.data.size();
-
-  for (int s = BigInt::item_bits - 1; s >= 0; --s) {
-    BigInt divisor = rhs << s;
-    divisor.data.insert(divisor.data.begin(), size_diff, 0);
-    divisors.push_back(divisor);
-  }
-
-  for (std::size_t i = 0; i < size_diff + 1; ++i) {
-    quotient.data.insert(quotient.data.begin(), 0);
-    for (int s = 0; s < BigInt::item_bits; ++s) {
-      if (remainder >= divisors[s]) {
-        remainder = remainder - divisors[s];
-        quotient.data[0] = quotient.data[0] | (0x80 >> s);
-      }
-      divisors[s] = divisors[s] >> 8;
-    }
-  }
-
-  quotient.prune();
-  remainder.prune();
-
-  return std::pair(quotient, remainder);
-}
-
-BigInt operator/(const BigInt& lhs, const BigInt& rhs) {
-  return divide(lhs, rhs).first;
-}
-
-BigInt operator%(const BigInt& lhs, const BigInt& rhs) {
-  return divide(lhs, rhs).second;
-}
+#endif  // BIG_INT_H_

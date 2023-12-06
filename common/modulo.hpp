@@ -1,15 +1,15 @@
 
-
+#include <iostream>
 // modular arithemetic
 template <typename T>
 T modular_exp(T base, T exp, T modulo) {
   T result = 1;
   while (exp != 0) {
-    if (exp & 1) {
+    if ((exp & 1) != 0) {
       result = (result * base) % modulo;
     }
     base = (base * base) % modulo;
-    exp >>= 1;
+    exp = exp >> 1;
   }
   return result;
 }
@@ -17,14 +17,14 @@ T modular_exp(T base, T exp, T modulo) {
 // find gcd with Euclidean algorithm
 template <typename T>
 T gcd(T a, T b) {
-  while (a != b) {
+  while (a != 0 && b != 0) {
     if (a > b) {
-      a = a - b;
+      a = a % b;
     } else {
-      b = b - a;
+      b = b % a;
     }
   }
-  return a;
+  return a + b;
 }
 
 // find lcm with gcd

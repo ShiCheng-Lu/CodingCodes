@@ -19,7 +19,7 @@ std::ostream& operator<<(std::ostream& out, std::vector<uint8_t>& data) {
     if (output_hex) {
       out << std::hex << std::setfill('0') << std::setw(2) << (int)byte;
     } else {
-      out << byte;
+      out << (char)byte;
     }
   }
   return out;
@@ -56,17 +56,23 @@ int main(int argc, char* argv[]) {
   auto gf256 = GF256();
 
   if (code == "rsa") {
-    encoder = new RSA(5, 7, 2);
+    encoder = new RSA<BigInt>(
+        "40094690950920881030683735292761468389214899724061",
+        "37975227936943673922808872755445627854565536638199", "65537");
   } else if (code == "aes") {
     encoder = new AES(gf256);
   } else if (code == "hamming") {
     encoder = new HammingCode();
   } else if (code == "rs" || code == "reedsolomon") {
     encoder = new ReedSolomon<uint8_t>(gf256, 11, 1, 255, 223);
+  } else {
+    std::cout << "invalid coder selected: " << code << std::endl;
+    return 1;
   }
   std::vector<uint8_t> out;
   if (cmd == "decode" || cmd == "-d") {
     out = encoder->decode(message_v);
+    std::cout << std::dec;
   } else if (cmd == "encode" || cmd == "-e") {
     out = encoder->encode(message_v);
     std::cout << std::hex;

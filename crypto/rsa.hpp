@@ -1,48 +1,65 @@
 #include "code.hpp"
 
+#include <tuple>
+#include "big_int.hpp"
 #include "modulo.hpp"
 
 /**
  * @brief https://en.wikipedia.org/wiki/RSA_(cryptosystem)
  *
  */
+template <typename T>
 class RSA : public Code {
-  int n;  // modulus
-  int e;  // public key
-  int d;  // private key
+  T n;  // modulus
+  T e;  // public key
+  T d;  // private key
 
  public:
   // Create and RSA encoder and decoder, p, q, must be prime
-  RSA(int p, int q, int e) : e{e} {
+  RSA(T p, T q, T e) : e{e} {
     n = p * q;
-    int l = lcm(p - 1, q - 1);
+    // std::cout << "N: " << n << std::endl;
+    T l = lcm(p - 1, q - 1);
+    // std::cout << "L: " << l << std::endl;
 
     // find private key with extended Euclidean algorithm
-    int a = e;
-    int b = l;
-    int s_0 = 1, s_1 = 0;
-    int div = 0;
+    T a = e;
+    T b = l;
+    T s_0 = 1, s_1 = 0;
+    T mul;
 
-    while (a != b) {
+    int i = 0;
+    while (a != 0 && b != 0) {
       if (a > b) {
-        a = a - b;
-        s_0 -= s_1;
+        std::tie(mul, a) = divide(a, b);
+        s_0 = s_0 - s_1 * mul;
       } else {
-        b = b - a;
-        s_1 -= s_0;
+        std::tie(mul, b) = divide(b, a);
+        s_1 = s_1 - s_0 * mul;
       }
+      // std::cout << s_0 << " " << s_1 << ' ' << a << ' ' << b << std::endl;
     }
-    d = s_0;
-
+    d = s_0 + s_1 * b;
+    // std::cout << "D: " << d << std::endl;
     // public key: (n, e)
     // private key (n, d)
   }
 
-  std::pair<int, int> public_key() { return std::pair{n, e}; }
+  std::pair<T, T> public_key() { return std::pair{n, e}; }
 
-  std::pair<int, int> private_key() { return std::pair{n, d}; }
+  std::pair<T, T> private_key() { return std::pair{n, d}; }
 
-  int encode(int data) { return modular_exp(data, e, n); }
+  T encode(T data) {
+    return modular_exp(data, e, n);
+  }
+  std::vector<std::uint8_t> encode(std::vector<std::uint8_t>& data) {
+    std::vector<std::uint8_t> d = modular_exp(T(data), e, n).vector();
+    // std::cout << modular_exp(T(data), e, n) << std::endl;
+    return d;
+  }
 
-  int decode(int data) { return modular_exp(data, d, n); }
+  T decode(T data) { return modular_exp(data, d, n); }
+  std::vector<std::uint8_t> decode(std::vector<std::uint8_t>& data) {
+    return modular_exp(T(data), d, n).vector();
+  }
 };
