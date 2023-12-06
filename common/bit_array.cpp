@@ -12,7 +12,8 @@ int main() {
   a[3] = ~a[3];
 
   cout << "array values" << endl;
-  for (auto i : a) {
-    cout << i << endl;
+  for (int i = 0; i < a.size(); ++i) {
+    cout << a[i];
   }
+  cout << endl;
 }
