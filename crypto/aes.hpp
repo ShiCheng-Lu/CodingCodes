@@ -8,75 +8,148 @@
 /**
  * @brief https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
  *
+ * currently only implements AES-128
+ *
  */
 class AES : public Code {
+  union AES_Column {
+    uint8_t ui8[4];
+    uint32_t ui32;
+  };
+
  public:
   Field<std::uint8_t>& f;
+  std::vector<uint8_t> key;
 
   std::vector<std::uint8_t> s_box;
+  std::vector<std::vector<AES_Column>> mix_col;
 
-  std::vector<std::vector<std::uint8_t>> mix_col_matrix;
-
-  void SubBytes(std::vector<std::uint8_t>& data) {
-    for (auto& byte : data) {
-      std::uint8_t inv = f.div(1, byte);
-
-      byte = inv;
-      for (int ii = 1; ii < 5; ++ii) {
-        byte = f.add(byte, (inv << ii) | (inv >> (8 - ii)));
-      }
-      byte = f.add(byte, 0b01100011);
+  void add_round_key(std::vector<std::uint8_t>& data,
+                     const std::vector<std::uint8_t>& key) {
+    for (int i = 0; i < data.size(); ++i) {
+      data[i] = f.add(data[i], key[i]);
     }
   }
 
-  void ShiftRows(std::vector<std::uint8_t>& data) {
-    std::uint8_t temp;
-    // shift row 2 (left 1)
-    temp = data[1];
-    data[1] = data[5];
-    data[5] = data[9];
-    data[9] = data[13];
-    data[13] = temp;
-    // shift row 3 (left 2)
-    std::swap(data[2], data[10]);
-    std::swap(data[6], data[14]);
-    // shift row 4 (right 1)
-    temp = data[15];
-    data[15] = data[11];
-    data[11] = data[7];
-    data[7] = data[3];
-    data[3] = temp;
+  void sub_bytes(std::vector<std::uint8_t>& data) {
+    for (int i = 0; i < data.size(); ++i) {
+      data[i] = s_box[data[i]];
+    }
   }
 
-  void MixColumns(std::vector<std::uint8_t>& data) {
-    std::uint8_t mix_mat[4][4] = {
+  void shift_rows(std::vector<std::uint8_t>& data) {
+    // shift
+    std::uint8_t temp[4];
+    for (int row = 1; row < 4; ++row) {
+      for (int i = 0; i < 4; ++i) {
+        temp[i] = data[(row + (i + row) * 4) % 16];
+      }
+      for (int i = 0; i < 4; ++i) {
+        data[row + i * 4] = temp[i];
+      }
+    }
+  }
+
+  void round(std::vector<std::uint8_t>& data,
+             const std::vector<std::uint8_t>& key) {
+    std::vector<AES_Column> result(4);
+    for (int i = 0; i < 4; ++i) {
+      result[i].ui32 = 0;
+    }
+    // perform SubBytes, ShiftRows, MixColumns with lookup table
+    // each entry contributes to one resulting column, data[r + c * 4]
+    // contributes to column (c - r) % 4. the value of data[r + c * 4] is
+    // transformed with SubBytes then multiplied by the r-th column of the
+    // MixColumns matrix
+    sub_bytes(data);
+
+    for (int i = 0; i < 16; ++i) {
+      // contributes to one column            add
+      result[(16 - i + i / 4) % 4].ui32 ^= mix_col[i % 4][data[i]].ui32;
+    }
+    // set data values from AES_Column back to data
+    for (int i = 0; i < 16; ++i) {
+      data[i] = result[i / 4].ui8[i % 4];
+    }
+    // AddRoundKey
+    add_round_key(data, key);
+  }
+
+  void next_key(std::vector<std::uint8_t>& key, std::uint8_t& rc) {
+    // first byte is additionally xor-ed by round constant
+    key[0] = f.add(key[0], rc);
+    // first 4 bytes of the new key
+    for (int i = 0; i < 4; ++i) {
+      key[i] = f.add(key[i], s_box[key[12 + (i + 1) % 4]]);
+    }
+    // rest of the keys
+    for (int i = 4; i < 16; ++i) {
+      key[i] = f.add(key[i - 4], key[i]);
+    }
+    // update round key
+    rc = f.mul(rc, 2);
+  }
+
+ public:
+  AES(Field<std::uint8_t>& f, std::vector<uint8_t> key)
+      : f{f}, key{key}, mix_col(4) {
+    // matrix used for mix column
+    uint8_t mix_mat[4][4] = {
         {2, 3, 1, 1},
         {1, 2, 3, 1},
         {1, 1, 2, 3},
         {3, 1, 1, 2},
     };
-    std::vector<std::uint8_t> result(4);
+    // setup s_box and
+    for (int v = 0; v <= UINT8_MAX; ++v) {
+      // find the s_box substitution result
+      uint8_t s_box_res = 0;
+      uint8_t inv = f.div(1, v);
+      for (int i = 0; i < 5; ++i) {
+        s_box_res = f.add(s_box_res, (inv << i) | (inv >> (8 - i)));
+      }
+      s_box_res = f.add(s_box_res, 0b01100011);
+      s_box.push_back(s_box_res);
 
-    for (int column = 0; column < 4; ++column) {
-      for (int x = 0; x < 4; ++x) {
-        for (int y = 0; y < 4; ++y) {
-          std::uint8_t product = f.mul(data[column * 4 + x], mix_mat[x][y]);
-          result[x] = f.add(result[x], product);
+      // find mix_column result for v
+      for (int row = 0; row < 4; ++row) {  // the row # contribute differently
+                                           // to result due to the mix_mat
+        AES_Column output;
+        for (int i = 0; i < 4; ++i) {
+          output.ui8[i] = f.mul(mix_mat[i][row], v);
         }
+        mix_col[row].push_back(output);
       }
     }
   }
 
-  void AddRoundKey(std::vector<std::uint8_t>& data, std::vector<std::uint8_t>& key) {
-    for (std::uint8_t i = 0; i < data.size(); ++i) {
-      data[i] = f.add(data[i], key[i]);
+  std::vector<std::uint8_t> encode(std::vector<std::uint8_t>& data) {
+    std::vector<std::uint8_t> subkey(key);
+    std::uint8_t rc = 1;
+    std::vector<std::uint8_t> output(data);
+    // 1. add round key
+    for (int i = 0; i < 16; ++i) {
+      output[i] = f.add(output[i], key[i]);
     }
+    // return output;
+    next_key(subkey, rc);
+    // 2. 9 rounds of encryption
+    for (int i = 0; i < 9; ++i) {
+      round(output, subkey);
+      next_key(subkey, rc);
+    }
+    // 3. final round
+    sub_bytes(output);
+    shift_rows(output);
+    add_round_key(output, subkey);
+    return output;
   }
 
- public:
-  AES(Field<std::uint8_t>& f) : f{f} {}
+  std::vector<std::uint8_t> decode(std::vector<std::uint8_t>& data) {
+    std::vector<std::uint8_t> subkey(key);
+    std::uint8_t rc = 1;
+    std::vector<std::uint8_t> output(data);
 
-  std::vector<std::uint8_t> encode(std::vector<std::uint8_t> data) { return data; }
-
-  std::vector<std::uint8_t> decode(std::vector<std::uint8_t> data) { return data; }
+    return data;
+  }
 };

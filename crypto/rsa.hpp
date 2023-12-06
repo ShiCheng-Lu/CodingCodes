@@ -53,9 +53,7 @@ class RSA : public Code {
     return modular_exp(data, e, n);
   }
   std::vector<std::uint8_t> encode(std::vector<std::uint8_t>& data) {
-    std::vector<std::uint8_t> d = modular_exp(T(data), e, n).vector();
-    // std::cout << modular_exp(T(data), e, n) << std::endl;
-    return d;
+    return modular_exp(T(data), e, n).vector();
   }
 
   T decode(T data) { return modular_exp(data, d, n); }

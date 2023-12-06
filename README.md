@@ -13,5 +13,5 @@ implemented in c++
 
 ## Cryptography codes:
 - AES (`aes`) (incomplete)
-- RSA (`rsa`) (incomplete, needs big int implementation)
+- RSA (`rsa`)
 
