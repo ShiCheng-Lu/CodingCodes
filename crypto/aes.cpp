@@ -16,40 +16,19 @@ void print_block(std::vector<uint8_t>& data) {
 }
 
 int main() {
-  GF256 f;
-  std::string key_str = "extraterresteral";
-  std::vector<uint8_t> key(key_str.begin(), key_str.end());  //(16, 0);
-  AES aes{f, key};  // std::vector(key.begin(), key.end())};
+  AES aes{"extraterresteral"};  // std::vector(key.begin(), key.end())};
 
+  std::cout << std::hex << aes.key << std::endl;
   // print_block(aes.s_box, 16);
 
-  vector<uint8_t> v;
-  for (int i = 0; i < 16; ++i) {
-    v.push_back(i + 1);
-  }
-  // pad v to 16
-  // while (v.size() < 16) {
-  //   v.push_back(0);
-  // }
+  std::string v_str = "hello world";
+  std::vector<uint8_t> v(v_str.begin(), v_str.end());
   vector<uint8_t> res = aes.encode(v);
+  std::cout << std::hex << v << std::endl;
 
   std::cout << std::hex << res << std::endl;
-  // hello: d82c0f58df913d63a8b420611d258c41
-  //   print_block(aes.s_box);
-  // aes.SubBytes(d);
-  // print_block(d, 16);
+  std::cout << "DECODE: " << std::endl;
 
-  // std::vector<uint8_t> ve = {
-  //     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-  // };
-  // std::cout << std::hex << ve << std::endl;
-  // aes.shift_rows(ve);
-  // std::cout << std::hex << ve << std::endl;
+  std::vector<uint8_t> decoded = aes.decode(res);
+  std::cout << std::hex << decoded << std::endl;
 }
-/**
- * 0  4  8  c
- * 5  9  d  1
- * a  e  2  6
- * f  3  7  b
- *
- */

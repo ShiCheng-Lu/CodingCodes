@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
         "40094690950920881030683735292761468389214899724061",
         "37975227936943673922808872755445627854565536638199", "65537");
   } else if (code == "aes") {
-    encoder = new AES(gf256, "1234567890987654");
+    encoder = new AES("extraterresteral");
   } else if (code == "hamming") {
     encoder = new HammingCode();
   } else if (code == "rs" || code == "reedsolomon") {
