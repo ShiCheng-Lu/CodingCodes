@@ -23,6 +23,8 @@ int main() {
 
   std::string v_str = "hello world";
   std::vector<uint8_t> v(v_str.begin(), v_str.end());
+  // std::vector<uint8_t> v(16, 0x10);
+  // v[0] = 'a';
   vector<uint8_t> res = aes.encode(v);
   std::cout << std::hex << v << std::endl;
 
@@ -32,3 +34,4 @@ int main() {
   std::vector<uint8_t> decoded = aes.decode(res);
   std::cout << std::hex << decoded << std::endl;
 }
+// 8b1ee0dd8dc939214c378cf406ac0fb8

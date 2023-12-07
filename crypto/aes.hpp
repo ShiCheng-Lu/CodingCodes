@@ -40,15 +40,29 @@ class AES : public Code {
     }
   }
 
-  void shift_rows(std::vector<std::uint8_t>& data) {
+  void shift_rows(std::vector<std::uint8_t>& data, int dir) {
     // shift
     std::uint8_t temp[4];
     for (int row = 1; row < 4; ++row) {
       for (int i = 0; i < 4; ++i) {
-        temp[i] = data[(row + (i + row) * 4) % 16];
+        temp[i] = data[(row + (i + dir * row) * 4 + 16) % 16];
       }
       for (int i = 0; i < 4; ++i) {
         data[row + i * 4] = temp[i];
+      }
+    }
+  }
+
+  void mix_column(std::vector<std::uint8_t>& data,
+                  const std::vector<std::uint8_t>& matrix) {
+    std::vector<std::uint8_t> result(4);
+    for (int c = 0; c < 4; ++c) {
+      for (int i = 0; i < 16; ++i) {
+        result[i / 4] ^= f.mul(data[c * 4 + i % 4], matrix[i]);
+      }
+      for (int i = 0; i < 4; ++i) {
+        data[c * 4 + i] = result[i];
+        result[i] = 0;
       }
     }
   }
@@ -168,7 +182,7 @@ class AES : public Code {
     }
     // 3. final round
     sub_bytes(output, s_box);
-    shift_rows(output);
+    shift_rows(output, 1);
     add_round_key(output, subkey);
     return output;
   }
@@ -181,23 +195,40 @@ class AES : public Code {
       next_key(subkey, rc);
       subkeys.push_back(subkey);
     }
-    for (auto key : subkeys) {
-      std::cout << std::hex << key << std::endl;
-    }
-    std::cout << "^ KEYS ^" << std::endl;
 
     std::vector<std::uint8_t> output(data);
+    std::vector<std::uint8_t> mix_col_mat_inv{
+        14, 11, 13, 9,   //
+        9,  14, 11, 13,  //
+        13, 9,  14, 11,  //
+        11, 13, 9,  14,  //
+    };
 
     add_round_key(output, subkeys.back());
-    // subkeys.pop_back();
-    std::cout << std::hex << output << std::endl;
+    subkeys.pop_back();
+    // std::cout << std::hex << output << std::endl;
 
-    shift_rows(output);
-    shift_rows(output);
-    shift_rows(output);
+    for (int i = 0; i < 9; ++i) {
+      shift_rows(output, -1);
+      sub_bytes(output, s_box_inv);
+      add_round_key(output, subkeys.back());
+      subkeys.pop_back();
+      mix_column(output, mix_col_mat_inv);
+    }
 
+    shift_rows(output, -1);
     sub_bytes(output, s_box_inv);
-
+    add_round_key(output, subkeys.back());
+    
+    std::uint8_t pad = output.back();
+    if (pad <= 16) {
+      for (int i = 16 - pad; i < 16; ++i) {
+        if (output[i] != pad) {
+          return output; // padding invalid, don't remove padding
+        }
+      }
+      output.resize(16 - pad);
+    }
     return output;
   }
 };
