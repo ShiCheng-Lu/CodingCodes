@@ -4,28 +4,28 @@
 #include <string>
 
 class BitString {
-  std::string data;
+    std::string data;
 
-  struct Reference {
-    char& c;
+    struct Reference {
+        char& c;
 
-    Reference(char& c) : c{c} {}
+        Reference(char& c) : c{c} {}
 
-    Reference& operator=(bool value) {
-      c = value ? '1' : '0';
-      return *this;
-    }
+        Reference& operator=(bool value) {
+            c = value ? '1' : '0';
+            return *this;
+        }
 
-    operator bool() { return c == '1'; }
-  };
+        operator bool() { return c == '1'; }
+    };
 
- public:
-  BitString(std::size_t len) : data(len, '0') {}
-  BitString(std::string str) : data(str) {}
+   public:
+    BitString(std::size_t len) : data(len, '0') {}
+    BitString(std::string str) : data(str) {}
 
-  std::size_t size() { return data.size(); }
+    std::size_t size() { return data.size(); }
 
-  Reference operator[](std::size_t idx) { return Reference(data[idx]); }
+    Reference operator[](std::size_t idx) { return Reference(data[idx]); }
 };
 
 #endif  // BIT_STRING_H_

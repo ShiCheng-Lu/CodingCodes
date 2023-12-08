@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+// #include "data.hpp"
+
 class BigInt {
  public:
   std::vector<std::uint8_t> data;
@@ -206,9 +208,7 @@ class BigInt {
     if (num.neg) {
       out << '-';
     }
-    for (int i = num.data.size() - 1; i >= 0; --i) {
-      out << std::setw(2) << std::setfill('0') << (int)num.data[i];
-    }
+    // out << num.data;
     return out;
   }
 

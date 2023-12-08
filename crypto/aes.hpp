@@ -1,9 +1,12 @@
+#ifndef AES_H_
+#define AES_H_
+
 #include <cstdint>
 #include <iostream>
 #include <vector>
 
-#include "code.hpp"
-#include "gf256.hpp"
+#include "common/code.hpp"
+#include "common/gf256.hpp"
 
 /**
  * @brief https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
@@ -219,12 +222,12 @@ class AES : public Code {
     shift_rows(output, -1);
     sub_bytes(output, s_box_inv);
     add_round_key(output, subkeys.back());
-    
+
     std::uint8_t pad = output.back();
     if (pad <= 16) {
       for (int i = 16 - pad; i < 16; ++i) {
         if (output[i] != pad) {
-          return output; // padding invalid, don't remove padding
+          return output;  // padding invalid, don't remove padding
         }
       }
       output.resize(16 - pad);
@@ -232,3 +235,5 @@ class AES : public Code {
     return output;
   }
 };
+
+#endif  // AES_H_
