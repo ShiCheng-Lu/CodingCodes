@@ -25,23 +25,9 @@ class BigInt {
 
     explicit operator bool() const { return data.size() != 0; }
 
-    std::string to_hex_string() {
-        std::stringstream ss;
-        ss << *this;
-        return ss.str();
-    }
+    std::string to_hex_string();
 
-    friend std::ostream& operator<<(std::ostream& out, const BigInt& num) {
-        if (num.data.size() == 0) {
-            return out << '0';
-        }
-        out << std::hex;
-        if (num.neg) {
-            out << '-';
-        }
-        out << num.data;
-        return out;
-    }
+    friend std::ostream& operator<<(std::ostream& out, const BigInt& num);
 
     friend int cmp(const BigInt& lhs, const BigInt& rhs);
 
