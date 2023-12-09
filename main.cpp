@@ -12,7 +12,11 @@
 
 using namespace std;
 
-string help = "usage: [code] [encode|decode] message";
+string help =
+    "usage: [code] [cmd] [message]"
+    "\n - [code]        aes, rsa, hamming, reedsolomon"
+    "\n - [cmd]         encode or decode, or -e and -d for short"
+    "\n - [message]     the message string to encode or decode";
 
 std::vector<uint8_t> from_hex(std::string data) {
     std::vector<uint8_t> output;
